@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wisdom for Retirement</title>
   <style>
-    /* ── Color tokens: light mode ── */
+    /* ── Color tokens: light mode (default) ── */
     :root {
       --bg-primary:    #ffffff;
       --bg-secondary:  #f5f5f3;
@@ -18,9 +18,20 @@
       --radius-md:     8px;
       --radius-lg:     12px;
     }
-    /* ── Color tokens: dark mode ── */
+    /* ── Color tokens: dark mode (class-based) ── */
+    html.dark {
+      --bg-primary:    #1e1e1c;
+      --bg-secondary:  #2a2a28;
+      --bg-info:       #0c3254;
+      --text-primary:  #f0ede8;
+      --text-secondary:#b4b2a9;
+      --text-tertiary: #888780;
+      --border-light:  rgba(255,255,255,0.10);
+      --border-mid:    rgba(255,255,255,0.18);
+    }
+    /* ── Also honour system preference if no manual choice stored ── */
     @media (prefers-color-scheme: dark) {
-      :root {
+      html:not(.light) {
         --bg-primary:    #1e1e1c;
         --bg-secondary:  #2a2a28;
         --bg-info:       #0c3254;
@@ -31,6 +42,26 @@
         --border-mid:    rgba(255,255,255,0.18);
       }
     }
+
+    /* ── Toggle button ── */
+    .theme-toggle {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 0.5px solid var(--border-mid);
+      background: var(--bg-secondary);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      line-height: 1;
+    }
+    .theme-toggle:active { transform: scale(0.93); }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,6 +83,7 @@
 
     /* ── Hero ── */
     .hero {
+      position: relative;
       padding: 1.25rem 1rem 1rem;
       text-align: center;
       background: var(--bg-primary);
@@ -271,6 +303,7 @@
 <div class="app">
 
   <div class="hero">
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">&#9790;</button>
     <div class="hero-title">Wisdom for Retirement</div>
     <div class="hero-sub">Bogle · Swensen · Clash of the Cultures</div>
   </div>
@@ -518,6 +551,40 @@
 </div><!-- /app -->
 
 <script>
+function toggleTheme() {
+  var html = document.documentElement;
+  var isDark = html.classList.contains('dark') ||
+    (!html.classList.contains('light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) {
+    html.classList.remove('dark');
+    html.classList.add('light');
+    localStorage.setItem('theme', 'light');
+    document.getElementById('theme-btn').innerHTML = '&#9790;';
+  } else {
+    html.classList.remove('light');
+    html.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+    document.getElementById('theme-btn').innerHTML = '&#9788;';
+  }
+}
+
+(function() {
+  var saved = localStorage.getItem('theme');
+  var html = document.documentElement;
+  if (saved === 'dark') {
+    html.classList.add('dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('theme-btn').innerHTML = '&#9788;';
+    });
+  } else if (saved === 'light') {
+    html.classList.add('light');
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('theme-btn').innerHTML = '&#9788;';
+    });
+  }
+})();
+
 function show(tab, btn) {
   document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
   document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
