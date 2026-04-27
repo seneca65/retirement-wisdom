@@ -5,12 +5,587 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wisdom for Retirement</title>
   <style>
-    body { margin: 0; background: #fff; font-family: sans-serif; }
-    /* paste the widget's <style> block contents here */
+    /* ── Color tokens: light mode ── */
+    :root {
+      --bg-primary:    #ffffff;
+      --bg-secondary:  #f5f5f3;
+      --bg-info:       #e6f1fb;
+      --text-primary:  #1a1a18;
+      --text-secondary:#5f5e5a;
+      --text-tertiary: #888780;
+      --border-light:  rgba(0,0,0,0.12);
+      --border-mid:    rgba(0,0,0,0.22);
+      --radius-md:     8px;
+      --radius-lg:     12px;
+    }
+    /* ── Color tokens: dark mode ── */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary:    #1e1e1c;
+        --bg-secondary:  #2a2a28;
+        --bg-info:       #0c3254;
+        --text-primary:  #f0ede8;
+        --text-secondary:#b4b2a9;
+        --text-tertiary: #888780;
+        --border-light:  rgba(255,255,255,0.10);
+        --border-mid:    rgba(255,255,255,0.18);
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 0 0 2rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      background: var(--bg-secondary);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      padding: 1.25rem 1rem 1rem;
+      text-align: center;
+      background: var(--bg-primary);
+      border-bottom: 0.5px solid var(--border-light);
+    }
+    .hero-title { font-size: 20px; font-weight: 600; margin-bottom: 3px; }
+    .hero-sub   { font-size: 12px; color: var(--text-secondary); }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      background: var(--bg-primary);
+      border-bottom: 0.5px solid var(--border-light);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 10px 2px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
+      min-width: 0;
+      font-family: inherit;
+    }
+    .nav-btn.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* ── Sections ── */
+    .section { display: none; padding: 1rem; }
+    .section.active { display: block; }
+
+    .section-head {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin: 0 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 0.5px solid var(--border-light);
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 12px;
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .card-body {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ── Quote cards ── */
+    .quote-card {
+      background: var(--bg-secondary);
+      border-left: 3px solid #1D9E75;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 11px 14px;
+      margin-bottom: 12px;
+    }
+    .quote-card.amber { border-left-color: #BA7517; }
+    .quote-text {
+      font-size: 13px;
+      font-style: italic;
+      line-height: 1.65;
+      margin-bottom: 5px;
+    }
+    .quote-attr { font-size: 11px; color: var(--text-secondary); font-weight: 600; }
+
+    /* ── Metrics grid ── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .metric {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px;
+    }
+    .metric-num  { font-size: 22px; font-weight: 600; }
+    .metric-lbl  { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ── Sliders ── */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .slider-label { font-size: 13px; color: var(--text-secondary); flex: 0 0 110px; }
+    .slider-val   { font-size: 13px; font-weight: 600; min-width: 44px; text-align: right; }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #1D9E75;
+      height: 4px;
+      cursor: pointer;
+    }
+
+    /* ── Bar charts ── */
+    .bar-wrap { margin: 4px 0 10px; }
+    .bar-row  { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .bar-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex: 0 0 88px;
+      text-align: right;
+    }
+    .bar-bg {
+      flex: 1;
+      height: 10px;
+      background: var(--bg-secondary);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 5px; transition: width 0.35s ease; }
+    .bar-val  { font-size: 12px; font-weight: 600; min-width: 32px; }
+
+    /* ── Note box ── */
+    .note-box {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-top: 6px;
+    }
+
+    /* ── Principle rows ── */
+    .principle-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+    .pnum {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--bg-secondary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .ptxt strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .ptxt span   { font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+
+    /* ── History timeline ── */
+    .history-item {
+      border-left: 2px solid var(--border-light);
+      padding: 0 0 16px 14px;
+      position: relative;
+      margin-left: 8px;
+    }
+    .history-item:last-child { border-left-color: transparent; padding-bottom: 0; }
+    .hdot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-mid);
+      position: absolute; left: -6px; top: 2px;
+    }
+    .hdot.danger  { border-color: #E24B4A; background: #FCEBEB; }
+    .hdot.success { border-color: #1D9E75; background: #E1F5EE; }
+    .history-date  { font-size: 11px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 3px; }
+    .history-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .history-lesson{ font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-md);
+      margin-bottom: 7px;
+    }
+    .badge-teal  { background: #E1F5EE; color: #0F6E56; }
+    .badge-amber { background: #FAEEDA; color: #854F0B; }
+    .badge-red   { background: #FCEBEB; color: #A32D2D; }
+
+    /* ── Clash rules ── */
+    .rule-row {
+      display: flex; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 0.5px solid var(--border-light);
+      align-items: flex-start;
+    }
+    .rule-row:last-child { border-bottom: none; }
+    .rule-num { font-size: 11px; font-weight: 600; color: var(--text-tertiary); min-width: 20px; padding-top: 2px; }
+    .rule-text strong { font-size: 13px; font-weight: 600; display: block; margin-bottom: 2px; }
+    .rule-text span   { font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+    .rules-label {
+      font-size: 12px; font-weight: 600;
+      color: var(--text-secondary);
+      padding: 0 0 6px;
+      border-bottom: 0.5px solid var(--border-light);
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-  <!-- paste the widget's HTML content here -->
-  <!-- paste the widget's <script> block here -->
+<div class="app">
+
+  <div class="hero">
+    <div class="hero-title">Wisdom for Retirement</div>
+    <div class="hero-sub">Bogle · Swensen · Clash of the Cultures</div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="show('principles',this)">Principles</button>
+    <button class="nav-btn" onclick="show('compound',this)">Compound</button>
+    <button class="nav-btn" onclick="show('allocate',this)">Allocate</button>
+    <button class="nav-btn" onclick="show('clash',this)">Clash</button>
+    <button class="nav-btn" onclick="show('history',this)">History</button>
+  </div>
+
+  <!-- ══ PRINCIPLES ══ -->
+  <div id="tab-principles" class="section active">
+    <p class="section-head">Core wisdom from two masters</p>
+
+    <div class="quote-card">
+      <div class="quote-text">"The only way the individual is going to end up with a reasonable outcome is to educate themselves."</div>
+      <div class="quote-attr">— David Swensen, Yale CIO</div>
+    </div>
+
+    <div class="principle-row">
+      <div class="pnum">1</div>
+      <div class="ptxt"><strong>Costs are the enemy</strong><span>Every fee comes directly out of your return. A 1% annual fee on $500k costs over $100k across 20 years. Bogle called this "the tyranny of compounding costs."</span></div>
+    </div>
+    <div class="principle-row">
+      <div class="pnum">2</div>
+      <div class="ptxt"><strong>Own the market, don't beat it</strong><span>Active managers charge more and almost always underperform broad index funds after fees. Own the whole market at the lowest possible cost.</span></div>
+    </div>
+    <div class="principle-row">
+      <div class="pnum">3</div>
+      <div class="ptxt"><strong>Diversify across asset classes</strong><span>Swensen recommended spreading across domestic equities, foreign equities, real estate, bonds, and inflation-protected bonds — not just U.S. stocks and bonds.</span></div>
+    </div>
+    <div class="principle-row">
+      <div class="pnum">4</div>
+      <div class="ptxt"><strong>Stay the course</strong><span>Markets fall. The investor who panics sells low and buys high. Conviction requires understanding — which is why reading matters.</span></div>
+    </div>
+    <div class="principle-row">
+      <div class="pnum">5</div>
+      <div class="ptxt"><strong>Rebalance regularly</strong><span>Markets drift your allocation away from your targets. Rebalancing forces you to sell high and buy low — the opposite of what most investors do instinctively.</span></div>
+    </div>
+    <div class="principle-row">
+      <div class="pnum">6</div>
+      <div class="ptxt"><strong>Tax sensitivity matters</strong><span>Swensen found taxes can reduce equity returns by 3+ percentage points per year. Use tax-deferred accounts first; hold bonds inside them.</span></div>
+    </div>
+
+    <div class="quote-card">
+      <div class="quote-text">"The returns from investing derive not from the frenzy of trading but from the business economics of corporate America."</div>
+      <div class="quote-attr">— John C. Bogle</div>
+    </div>
+  </div>
+
+  <!-- ══ COMPOUND ══ -->
+  <div id="tab-compound" class="section">
+    <p class="section-head">The magic — and the math — of compounding</p>
+
+    <div class="card">
+      <div class="slider-row">
+        <div class="slider-label">Starting amount</div>
+        <input type="range" min="10000" max="1000000" step="10000" value="200000" id="s-principal" oninput="calcCompound()">
+        <div class="slider-val" id="o-principal">$200k</div>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Annual return</div>
+        <input type="range" min="2" max="12" step="0.5" value="7" id="s-rate" oninput="calcCompound()">
+        <div class="slider-val" id="o-rate">7%</div>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Annual fees</div>
+        <input type="range" min="0" max="2" step="0.1" value="0.1" id="s-fee" oninput="calcCompound()">
+        <div class="slider-val" id="o-fee">0.1%</div>
+      </div>
+      <div class="slider-row">
+        <div class="slider-label">Years</div>
+        <input type="range" min="5" max="40" step="1" value="20" id="s-years" oninput="calcCompound()">
+        <div class="slider-val" id="o-years">20 yrs</div>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-num" id="r-net" style="color:#1D9E75;">—</div>
+        <div class="metric-lbl">After your fees</div>
+      </div>
+      <div class="metric">
+        <div class="metric-num" id="r-highfee" style="color:#E24B4A;">—</div>
+        <div class="metric-lbl">After 1% fee fund</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 12px 14px;">
+      <div class="card-label">Fee drag over period</div>
+      <div style="font-size:26px;font-weight:600;" id="r-drag">—</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;margin-bottom:12px;" id="r-drag-sub"></div>
+      <div class="bar-wrap" style="margin-bottom:6px;">
+        <div class="bar-row">
+          <div class="bar-label" style="font-size:11px;">Low cost</div>
+          <div class="bar-bg"><div class="bar-fill" id="bar-low" style="background:#1D9E75;width:0%"></div></div>
+          <div class="bar-val" id="bvl">—</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label" style="font-size:11px;">1% fee fund</div>
+          <div class="bar-bg"><div class="bar-fill" id="bar-high" style="background:#E24B4A;width:0%"></div></div>
+          <div class="bar-val" id="bvh">—</div>
+        </div>
+      </div>
+      <div class="card-body" style="font-size:12px;" id="r-note"></div>
+    </div>
+  </div>
+
+  <!-- ══ ALLOCATE ══ -->
+  <div id="tab-allocate" class="section">
+    <p class="section-head">Bogle's updated rule + Swensen's framework</p>
+
+    <div class="card">
+      <div class="card-label">Bogle's updated bond rule — "age minus 10"</div>
+      <div class="card-body" style="margin-bottom:10px;">Later in life, Bogle softened his original "age in bonds" rule. People live longer, retire later, and need more growth. His updated thinking: subtract 10 from your age to get your bond percentage.</div>
+      <div class="slider-row">
+        <div class="slider-label">Your age</div>
+        <input type="range" min="55" max="90" step="1" value="65" id="s-age" oninput="calcAge()">
+        <div class="slider-val" id="o-age">65</div>
+      </div>
+      <div class="metric-grid" style="margin-top:10px;">
+        <div class="metric">
+          <div class="metric-num" id="age-bonds" style="color:#378ADD;">55%</div>
+          <div class="metric-lbl">Bonds (age minus 10)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-num" id="age-stocks" style="color:#1D9E75;">45%</div>
+          <div class="metric-lbl">Stocks (growth)</div>
+        </div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-row">
+          <div class="bar-label" style="font-size:11px;">Bonds/fixed</div>
+          <div class="bar-bg"><div class="bar-fill" id="bar-bonds" style="background:#378ADD;width:55%"></div></div>
+          <div class="bar-val" id="bv-bonds">55%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label" style="font-size:11px;">Stocks/equity</div>
+          <div class="bar-bg"><div class="bar-fill" id="bar-stocks" style="background:#1D9E75;width:45%"></div></div>
+          <div class="bar-val" id="bv-stocks">45%</div>
+        </div>
+      </div>
+      <div class="note-box" id="age-note">At 65, this gives you 10% more in stocks than the original rule — meaningful for a retirement that could last 25–30 years.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Swensen's suggested starting allocation</div>
+      <div class="card-body" style="margin-bottom:12px;">A diversified equity-oriented base. Adjust toward more bonds as you age using Bogle's slider above.</div>
+      <div class="bar-wrap" style="margin:0;">
+        <div class="bar-row"><div class="bar-label">US stocks</div><div class="bar-bg"><div class="bar-fill" style="background:#1D9E75;width:30%"></div></div><div class="bar-val">30%</div></div>
+        <div class="bar-row"><div class="bar-label">Intl stocks</div><div class="bar-bg"><div class="bar-fill" style="background:#378ADD;width:20%"></div></div><div class="bar-val">20%</div></div>
+        <div class="bar-row"><div class="bar-label">Emerging mkt</div><div class="bar-bg"><div class="bar-fill" style="background:#5DCAA5;width:10%"></div></div><div class="bar-val">10%</div></div>
+        <div class="bar-row"><div class="bar-label">Real estate</div><div class="bar-bg"><div class="bar-fill" style="background:#EF9F27;width:20%"></div></div><div class="bar-val">20%</div></div>
+        <div class="bar-row"><div class="bar-label">US bonds</div><div class="bar-bg"><div class="bar-fill" style="background:#888780;width:15%"></div></div><div class="bar-val">15%</div></div>
+        <div class="bar-row"><div class="bar-label">TIPS (infl.)</div><div class="bar-bg"><div class="bar-fill" style="background:#AFA9EC;width:5%"></div></div><div class="bar-val">5%</div></div>
+      </div>
+    </div>
+
+    <div class="quote-card">
+      <div class="quote-text">"Diversification is the one free lunch in investing — it reduces risk without necessarily reducing expected return."</div>
+      <div class="quote-attr">— David Swensen</div>
+    </div>
+  </div>
+
+  <!-- ══ CLASH ══ -->
+  <div id="tab-clash" class="section">
+    <p class="section-head">The Clash of the Cultures (2012)</p>
+
+    <div class="quote-card amber">
+      <div class="quote-text">"When enterprise becomes the bubble on a whirlpool of speculation … the job of capitalism is likely to be ill-done."</div>
+      <div class="quote-attr">— John Maynard Keynes, quoted by Bogle</div>
+    </div>
+
+    <div class="rules-label">Bogle's ten rules for investors</div>
+
+    <div class="rule-row"><div class="rule-num">1</div><div class="rule-text"><strong>Remember reversion to the mean</strong><span>Yesterday's top fund is rarely tomorrow's. Past performance is not prologue — it is almost always a trap. Hot funds cool; winning strategies get crowded out.</span></div></div>
+    <div class="rule-row"><div class="rule-num">2</div><div class="rule-text"><strong>Time is your friend, impulse is your enemy</strong><span>Compound interest works slowly. Panic sells and euphoric buys destroy portfolios. Market timing requires two correct decisions in a row — nearly impossible.</span></div></div>
+    <div class="rule-row"><div class="rule-num">3</div><div class="rule-text"><strong>Buy right and hold tight</strong><span>Get your stock/bond balance right for your situation, then hold it. Only change it as your life changes — not as the market changes.</span></div></div>
+    <div class="rule-row"><div class="rule-num">4</div><div class="rule-text"><strong>Have realistic expectations</strong><span>The "bagel" is real investment return — dividends plus earnings growth. The "doughnut" is speculative return from changing valuations. Eat the bagel; don't count on the doughnut.</span></div></div>
+    <div class="rule-row"><div class="rule-num">5</div><div class="rule-text"><strong>Forget the needle, buy the haystack</strong><span>Don't try to pick winning stocks. Buy the whole market through a broad index fund and capture everything it produces.</span></div></div>
+    <div class="rule-row"><div class="rule-num">6</div><div class="rule-text"><strong>Minimize the croupier's take</strong><span>Wall Street is a casino — the house always wins its cut. Every fee, commission, and expense ratio is a guaranteed loss before you even begin.</span></div></div>
+    <div class="rule-row"><div class="rule-num">7</div><div class="rule-text"><strong>There is no escaping risk</strong><span>Stocks are volatile. Bonds lose to inflation. Cash loses to both. The goal is not to eliminate risk but to be compensated fairly for the risk you take.</span></div></div>
+    <div class="rule-row"><div class="rule-num">8</div><div class="rule-text"><strong>Beware of fighting the last war</strong><span>Investors pile into what just worked. Gold after it soared. Tech after the bubble. The strategy that dominated last decade rarely repeats.</span></div></div>
+    <div class="rule-row"><div class="rule-num">9</div><div class="rule-text"><strong>The hedgehog bests the fox</strong><span>The fox knows many things; the hedgehog knows one big thing. Know one thing: own the market, keep costs low, stay the course.</span></div></div>
+    <div class="rule-row"><div class="rule-num">10</div><div class="rule-text"><strong>Stay the course</strong><span>Bogle's last word, always. The investor who holds through crashes, bubbles, and uncertainty almost always beats the investor who reacts to them.</span></div></div>
+
+    <div class="quote-card" style="margin-top:14px;">
+      <div class="quote-text">"We investors don't get what we pay for. We get precisely what we don't pay for. So, the less we pay, the more we get."</div>
+      <div class="quote-attr">— John C. Bogle, The Clash of the Cultures</div>
+    </div>
+  </div>
+
+  <!-- ══ HISTORY ══ -->
+  <div id="tab-history" class="section">
+    <p class="section-head">Lessons the market has already taught</p>
+
+    <div class="history-item">
+      <div class="hdot danger"></div>
+      <div class="history-date">1929 – 1932</div>
+      <div class="history-title">The Great Crash</div>
+      <span class="badge badge-red">-90% small stocks</span>
+      <div class="history-lesson">Small stocks fell 90% peak to trough. But $1 invested in June 1932 grew 100,000-fold by 2003. Swensen's lesson: diversification helps investors survive concentrated collapse and stay in the game for the recovery.</div>
+    </div>
+
+    <div class="history-item">
+      <div class="hdot danger"></div>
+      <div class="history-date">1966 – 1974</div>
+      <div class="history-title">The Go-Go Years and their aftermath</div>
+      <span class="badge badge-amber">Speculation, then ruin</span>
+      <div class="history-lesson">Bogle lived this personally. Hot funds chasing momentum peaked and crashed. Wellington Fund, which he ran, lost most of its assets. He called it his greatest mistake — and the restoration of patient, balanced investing his greatest recovery.</div>
+    </div>
+
+    <div class="history-item">
+      <div class="hdot danger"></div>
+      <div class="history-date">1999 – 2003</div>
+      <div class="history-title">Dot-com bust and reversion to the mean</div>
+      <span class="badge badge-red">-51% CGM Focus after peak</span>
+      <div class="history-lesson">Bogle documented fund after fund that soared — then collapsed. The CGM Focus Fund returned 917% from 1998–2007, then lost 51% while the S&P fell only 6%. The typical shareholder lost 11% annually chasing it. RTM is relentless.</div>
+    </div>
+
+    <div class="history-item">
+      <div class="hdot danger"></div>
+      <div class="history-date">2008 – 2009</div>
+      <div class="history-title">Financial crisis</div>
+      <span class="badge badge-red">-57% S&amp;P 500 peak</span>
+      <div class="history-lesson">Investors who panicked and sold locked in their losses. Those who rebalanced — buying stocks when they were cheapest — recovered and outperformed. Speculation in mortgage-backed securities brought the system to its knees. Bogle had warned exactly this would happen.</div>
+    </div>
+
+    <div class="history-item">
+      <div class="hdot success"></div>
+      <div class="history-date">1926 – 2003</div>
+      <div class="history-title">The long-run case for equities</div>
+      <span class="badge badge-teal">$1 → $2,285 in stocks vs $61 in bonds</span>
+      <div class="history-lesson">Ibbotson data: large U.S. stocks compounded at 10.4% annually. One dollar became $2,285. Bonds became $61. Cash became $18. Both Bogle and Swensen agree: equity ownership, patiently held and broadly diversified, is the engine of long-term wealth.</div>
+    </div>
+
+    <div class="quote-card" style="margin-top:4px;">
+      <div class="quote-text">"The stock market is a giant distraction from the business of investing."</div>
+      <div class="quote-attr">— John C. Bogle</div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+function show(tab, btn) {
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+function fmt(n) {
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + Math.round(n / 1000) + 'k';
+  return '$' + Math.round(n);
+}
+
+function calcCompound() {
+  var p    = +document.getElementById('s-principal').value;
+  var r    = +document.getElementById('s-rate').value / 100;
+  var fee  = +document.getElementById('s-fee').value / 100;
+  var yrs  = +document.getElementById('s-years').value;
+
+  document.getElementById('o-principal').textContent = fmt(p);
+  document.getElementById('o-rate').textContent      = (+document.getElementById('s-rate').value).toFixed(1) + '%';
+  document.getElementById('o-fee').textContent       = (+document.getElementById('s-fee').value).toFixed(1) + '%';
+  document.getElementById('o-years').textContent     = yrs + ' yrs';
+
+  var vLow  = p * Math.pow(1 + r - fee,  yrs);
+  var vHigh = p * Math.pow(1 + r - 0.01, yrs);
+  var drag  = vLow - vHigh;
+
+  document.getElementById('r-net').textContent     = fmt(vLow);
+  document.getElementById('r-highfee').textContent = fmt(vHigh);
+  document.getElementById('r-drag').textContent    = drag >= 0 ? '+' + fmt(drag) : '-' + fmt(Math.abs(drag));
+  document.getElementById('r-drag-sub').textContent = fee <= 0.01
+    ? 'advantage of your low-cost approach'
+    : 'extra drag vs a 1% fee fund';
+
+  var mx = Math.max(vLow, vHigh);
+  document.getElementById('bar-low').style.width  = Math.round(vLow  / mx * 100) + '%';
+  document.getElementById('bar-high').style.width = Math.round(vHigh / mx * 100) + '%';
+  document.getElementById('bvl').textContent = fmt(vLow);
+  document.getElementById('bvh').textContent = fmt(vHigh);
+  document.getElementById('r-note').textContent =
+    'Your money grows ' + (vLow / p).toFixed(1) + 'x. Bogle: the less you pay, the more you keep — by a lot, over time.';
+}
+
+function calcAge() {
+  var age   = +document.getElementById('s-age').value;
+  var bonds  = Math.max(0, age - 10);
+  var stocks = 100 - bonds;
+
+  document.getElementById('o-age').textContent      = age;
+  document.getElementById('age-bonds').textContent  = bonds + '%';
+  document.getElementById('age-stocks').textContent = stocks + '%';
+  document.getElementById('bar-bonds').style.width  = bonds + '%';
+  document.getElementById('bar-stocks').style.width = stocks + '%';
+  document.getElementById('bv-bonds').textContent   = bonds + '%';
+  document.getElementById('bv-stocks').textContent  = stocks + '%';
+
+  var note = '';
+  if (age < 62)      note = 'At ' + age + ', the updated rule still gives you ' + stocks + '% in stocks. A long retirement runway means growth matters as much as stability.';
+  else if (age < 72) note = 'At ' + age + ', ' + stocks + '% stocks with ' + bonds + '% bonds. Bogle softened the old rule because retirements now routinely last 25–30 years.';
+  else if (age < 82) note = 'At ' + age + ', the updated rule tilts toward stability — but keeps ' + stocks + '% in stocks to guard against outliving your money.';
+  else               note = 'At ' + age + ', capital preservation is the priority. Even so, ' + stocks + '% in equities helps protect against inflation over a long horizon.';
+
+  document.getElementById('age-note').textContent = note;
+}
+
+calcCompound();
+calcAge();
+</script>
 </body>
 </html>
